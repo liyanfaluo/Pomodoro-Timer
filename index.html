@@ -1,0 +1,1367 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, maximum-scale=5.0, minimum-scale=0.1">
+    <title>番茄钟 - 任务管理与时间追踪</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 15px;
+        }
+
+        @media (min-width: 768px) {
+            .container {
+                max-width: 1000px;
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .container {
+                max-width: 1200px;
+            }
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .timer-section, .tasks-section, .calendar-section, .settings-section {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        h2 {
+            margin-bottom: 20px;
+            color: #667eea;
+        }
+
+        .timer {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .time-display {
+            font-size: 4rem;
+            font-weight: bold;
+            margin: 20px 0;
+            color: #333;
+        }
+
+        .timer-controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .start-btn {
+            background: #667eea;
+            color: white;
+        }
+
+        .pause-btn {
+            background: #f093fb;
+            color: white;
+        }
+
+        .reset-btn {
+            background: #4facfe;
+            color: white;
+        }
+
+        .mode-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .mode-btn {
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .mode-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .task-form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 50px;
+            font-size: 1rem;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .add-task-btn {
+            background: #667eea;
+            color: white;
+        }
+
+        .task-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .task-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background 0.2s ease;
+        }
+
+        .task-item:hover {
+            background: #f9f9f9;
+        }
+
+        .task-item.completed {
+            text-decoration: line-through;
+            color: #999;
+        }
+
+        .task-checkbox {
+            margin-right: 12px;
+            transform: scale(1.2);
+        }
+
+        .task-name {
+            flex: 1;
+        }
+
+        .task-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .edit-btn, .delete-btn {
+            padding: 5px 10px;
+            font-size: 0.8rem;
+        }
+
+        .edit-btn {
+            background: #4facfe;
+            color: white;
+        }
+
+        .delete-btn {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        .cancel-btn {
+            background: #4facfe;
+            color: white;
+        }
+
+        .pomodoro-count {
+            background: #f093fb;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            margin-left: 10px;
+        }
+
+        .calendar-section {
+            grid-column: 1 / -1;
+        }
+
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .calendar-nav {
+            display: flex;
+            gap: 10px;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 10px;
+        }
+
+        .calendar-day {
+            aspect-ratio: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            padding: 10px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            z-index: 1;
+            text-align: center;
+        }
+
+        .calendar-day > div:first-child {
+            font-size: 1.2rem;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .task-list-mini {
+            font-size: 0.6rem;
+            margin-top: 8px;
+            max-height: 45px;
+            overflow: hidden;
+            width: 100%;
+            text-align: left;
+            padding-left: 5px;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .calendar-day:hover {
+            background: #f0f0f0;
+        }
+
+        .calendar-day.today {
+            background: #667eea;
+            color: white;
+        }
+
+        .calendar-day.has-task {
+            background: #f093fb;
+            color: white;
+        }
+
+        .calendar-day.selected {
+            background: #ff6b81;
+            color: white;
+        }
+
+        .task-list-mini {
+            font-size: 0.6rem;
+            margin-top: 5px;
+            max-height: 45px;
+            overflow: hidden;
+            width: 100%;
+            text-align: left;
+            padding-left: 5px;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .task-mini {
+            margin-bottom: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: flex;
+            align-items: center;
+        }
+
+        .task-mini.completed {
+            text-decoration: line-through;
+            opacity: 0.6;
+        }
+
+        .task-bullet {
+            display: inline-block;
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background-color: currentColor;
+            margin-right: 4px;
+            flex-shrink: 0;
+        }
+
+        .settings-section {
+            grid-column: 1 / -1;
+        }
+
+        .settings-form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .setting-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        label {
+            font-weight: 600;
+            color: #666;
+        }
+
+        input[type="number"] {
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .reminder-section {
+            margin-top: 20px;
+        }
+
+        .reminder-form {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        select {
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .save-settings-btn {
+            background: #667eea;
+            color: white;
+            margin-top: 20px;
+            grid-column: 1 / -1;
+        }
+
+        .settings-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 50%;
+            transition: background 0.3s ease;
+        }
+
+        .settings-btn:hover {
+            background: rgba(0,0,0,0.1);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .collapse-btn {
+            background: none;
+            border: none;
+            font-size: 1rem;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 50%;
+            transition: background 0.3s ease;
+        }
+
+        .collapse-btn:hover {
+            background: rgba(0,0,0,0.1);
+        }
+
+        .section-content {
+            transition: all 0.3s ease;
+            max-height: 500px;
+            overflow: hidden;
+        }
+
+        .section-content.collapsed {
+            max-height: 0;
+            overflow: hidden;
+            margin-bottom: 0;
+        }
+
+        /* 模态框样式 */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .close-btn {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+
+        .close-btn:hover,
+        .close-btn:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .modal-body {
+            padding: 10px 0;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+
+            .time-display {
+                font-size: 3rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+
+
+        <div class="main-content">
+            <!-- 计时器部分 -->
+            <div class="collapsible-section timer-section">
+                <div class="section-header">
+                    <h2>计时器</h2>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="collapse-btn" data-section="timer" title="折叠/展开">
+                            ▼
+                        </button>
+                        <button class="settings-btn" id="settings-btn" title="设置">
+                            ⚙️
+                        </button>
+                    </div>
+                </div>
+                <div class="section-content" id="timer-content">
+                    <div class="timer">
+                        <div class="mode-buttons">
+                            <button class="mode-btn active" data-mode="work">工作</button>
+                            <button class="mode-btn" data-mode="short-break">短休息</button>
+                            <button class="mode-btn" data-mode="long-break">长休息</button>
+                        </div>
+                        <div class="time-display" id="time-display">25:00</div>
+                        <div class="timer-controls">
+                            <button class="start-btn" id="start-btn">开始</button>
+                            <button class="pause-btn" id="pause-btn" disabled>暂停</button>
+                            <button class="reset-btn" id="reset-btn">重置</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 任务部分 -->
+            <div class="collapsible-section tasks-section">
+                <div class="section-header">
+                    <h2 id="task-section-title">任务管理</h2>
+                    <button class="collapse-btn" data-section="tasks" title="折叠/展开">
+                        ▼
+                    </button>
+                </div>
+                <div class="section-content" id="tasks-content">
+                    <div class="task-form">
+                        <input type="text" id="task-input" placeholder="添加新任务...">
+                        <button class="add-task-btn" id="add-task-btn">添加</button>
+                    </div>
+                    <div class="task-list" id="task-list">
+                        <!-- 任务列表将通过 JavaScript 动态生成 -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 日历部分 -->
+            <div class="calendar-section">
+                <h2>日历视图</h2>
+                <div class="calendar-header">
+                    <h3 id="calendar-title">2026年2月</h3>
+                    <div class="calendar-nav">
+                        <button class="prev-month-btn" id="prev-month-btn">← 上月</button>
+                        <button class="next-month-btn" id="next-month-btn">下月 →</button>
+                    </div>
+                </div>
+                <div class="calendar-grid" id="calendar-grid">
+                    <!-- 日历将通过 JavaScript 动态生成 -->
+                </div>
+            </div>
+
+            <!-- 设置模态框 -->
+            <div class="modal" id="settings-modal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2>设置</h2>
+                        <button class="close-btn" id="close-settings-btn">×</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="settings-form">
+                            <div class="setting-group">
+                                <label for="work-time">工作时间（分钟）</label>
+                                <input type="number" id="work-time" min="1" max="60" value="25">
+                            </div>
+                            <div class="setting-group">
+                                <label for="short-break">短休息（分钟）</label>
+                                <input type="number" id="short-break" min="1" max="30" value="5">
+                            </div>
+                            <div class="setting-group">
+                                <label for="long-break">长休息（分钟）</label>
+                                <input type="number" id="long-break" min="1" max="60" value="15">
+                            </div>
+                        </div>
+
+                        <div class="reminder-section">
+                            <h3>自定义提醒</h3>
+                            <div class="reminder-form">
+                                <select id="reminder-type">
+                                    <option value="none">无提醒</option>
+                                    <option value="notification">浏览器通知</option>
+                                    <option value="sound">声音提醒</option>
+                                    <option value="both">通知和声音</option>
+                                </select>
+                                <button class="save-settings-btn" id="save-settings-btn">保存设置</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 编辑任务模态框 -->
+            <div class="modal" id="edit-task-modal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2>编辑任务</h2>
+                        <button class="close-btn" id="close-edit-task-btn">×</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="setting-group">
+                            <label for="edit-task-input">任务名称</label>
+                            <input type="text" id="edit-task-input" placeholder="输入任务名称">
+                        </div>
+                        <div style="margin-top: 20px; text-align: right;">
+                            <button class="save-settings-btn" id="save-edit-task-btn">保存</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 添加任务模态框 -->
+            <div class="modal" id="add-task-modal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2>添加任务</h2>
+                        <button class="close-btn" id="close-add-task-btn">×</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="setting-group">
+                            <label for="add-task-input">任务名称</label>
+                            <input type="text" id="add-task-input" placeholder="输入任务名称">
+                        </div>
+                        <div style="margin-top: 20px; text-align: right;">
+                            <button class="save-settings-btn" id="save-add-task-btn">保存</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 通知模态框 -->
+            <div class="modal" id="notification-modal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2>通知</h2>
+                        <button class="close-btn" id="close-notification-btn">×</button>
+                    </div>
+                    <div class="modal-body">
+                        <p id="notification-message" style="text-align: center; margin: 20px 0;"></p>
+                        <div style="margin-top: 20px; text-align: right;">
+                            <button class="save-settings-btn" id="close-notification-btn-2">确定</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 确认删除模态框 -->
+            <div class="modal" id="confirm-delete-modal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2>确认删除</h2>
+                        <button class="close-btn" id="close-confirm-delete-btn">×</button>
+                    </div>
+                    <div class="modal-body">
+                        <p style="text-align: center; margin: 20px 0;">确定要删除这个任务吗？</p>
+                        <div style="margin-top: 20px; text-align: right; display: flex; justify-content: flex-end; gap: 15px;">
+                            <button class="cancel-btn" id="cancel-delete-btn" style="width: 100px;">取消</button>
+                            <button class="delete-btn" id="confirm-delete-btn" style="width: 100px;">删除</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 全局变量
+        let timerInterval;
+        let remainingTime = 1500; // 默认工作时间（25分钟）
+        let currentMode = 'work';
+        let isRunning = false;
+        let tasks = [];
+        let settings = {
+            work_time: 1500,
+            short_break: 300,
+            long_break: 900,
+            reminder: 'none'
+        };
+        let currentDate = new Date();
+        let selectedDate = null;
+
+        // DOM 元素
+        const timeDisplay = document.getElementById('time-display');
+        const startBtn = document.getElementById('start-btn');
+        const pauseBtn = document.getElementById('pause-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const modeBtns = document.querySelectorAll('.mode-btn');
+        const taskInput = document.getElementById('task-input');
+        const addTaskBtn = document.getElementById('add-task-btn');
+        const taskList = document.getElementById('task-list');
+        const taskSectionTitle = document.getElementById('task-section-title');
+        const calendarTitle = document.getElementById('calendar-title');
+        const prevMonthBtn = document.getElementById('prev-month-btn');
+        const nextMonthBtn = document.getElementById('next-month-btn');
+        const calendarGrid = document.getElementById('calendar-grid');
+        const workTimeInput = document.getElementById('work-time');
+        const shortBreakInput = document.getElementById('short-break');
+        const longBreakInput = document.getElementById('long-break');
+        const reminderTypeSelect = document.getElementById('reminder-type');
+        const saveSettingsBtn = document.getElementById('save-settings-btn');
+        const settingsBtn = document.getElementById('settings-btn');
+        const settingsModal = document.getElementById('settings-modal');
+        const closeSettingsBtn = document.getElementById('close-settings-btn');
+        const editTaskModal = document.getElementById('edit-task-modal');
+        const closeEditTaskBtn = document.getElementById('close-edit-task-btn');
+        const editTaskInput = document.getElementById('edit-task-input');
+        const saveEditTaskBtn = document.getElementById('save-edit-task-btn');
+        let currentEditTaskIndex = -1;
+        const addTaskModal = document.getElementById('add-task-modal');
+        const closeAddTaskBtn = document.getElementById('close-add-task-btn');
+        const addTaskInput = document.getElementById('add-task-input');
+        const saveAddTaskBtn = document.getElementById('save-add-task-btn');
+        let currentAddTaskDate = null;
+        const notificationModal = document.getElementById('notification-modal');
+        const closeNotificationBtn = document.getElementById('close-notification-btn');
+        const closeNotificationBtn2 = document.getElementById('close-notification-btn-2');
+        const notificationMessage = document.getElementById('notification-message');
+        const confirmDeleteModal = document.getElementById('confirm-delete-modal');
+        const closeConfirmDeleteBtn = document.getElementById('close-confirm-delete-btn');
+        const cancelDeleteBtn = document.getElementById('cancel-delete-btn');
+        const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
+        let taskToDeleteIndex = -1;
+
+        // 初始化
+        function init() {
+            loadData();
+            updateTimerDisplay();
+            renderTasks();
+            renderCalendar();
+            updateSettingsForm();
+            requestNotificationPermission();
+        }
+
+        // 加载数据
+        function loadData() {
+            try {
+                const data = JSON.parse(localStorage.getItem('pomodoro_data'));
+                if (data) {
+                    tasks = data.tasks || [];
+                    settings = {
+                        work_time: data.work_time || 1500,
+                        short_break: data.short_break || 300,
+                        long_break: data.long_break || 900,
+                        reminder: data.reminder || 'none'
+                    };
+                    remainingTime = settings.work_time;
+                }
+            } catch (error) {
+                console.error('加载数据失败:', error);
+            }
+        }
+
+        // 保存数据
+        function saveData() {
+            const data = {
+                tasks,
+                work_time: settings.work_time,
+                short_break: settings.short_break,
+                long_break: settings.long_break,
+                reminder: settings.reminder
+            };
+            localStorage.setItem('pomodoro_data', JSON.stringify(data));
+        }
+
+        // 更新计时器显示
+        function updateTimerDisplay() {
+            const minutes = Math.floor(remainingTime / 60);
+            const seconds = remainingTime % 60;
+            timeDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        // 开始计时器
+        function startTimer() {
+            if (isRunning) return;
+            isRunning = true;
+            startBtn.disabled = true;
+            pauseBtn.disabled = false;
+            
+            timerInterval = setInterval(() => {
+                remainingTime--;
+                updateTimerDisplay();
+                
+                if (remainingTime <= 0) {
+                    clearInterval(timerInterval);
+                    isRunning = false;
+                    startBtn.disabled = false;
+                    pauseBtn.disabled = true;
+                    showReminder();
+                    switchMode();
+                }
+            }, 1000);
+        }
+
+        // 暂停计时器
+        function pauseTimer() {
+            if (!isRunning) return;
+            isRunning = false;
+            startBtn.disabled = false;
+            pauseBtn.disabled = true;
+            clearInterval(timerInterval);
+        }
+
+        // 重置计时器
+        function resetTimer() {
+            pauseTimer();
+            setMode(currentMode);
+        }
+
+        // 设置模式
+        function setMode(mode) {
+            currentMode = mode;
+            
+            // 更新按钮状态
+            modeBtns.forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.mode === mode) {
+                    btn.classList.add('active');
+                }
+            });
+            
+            // 设置对应时间
+            switch (mode) {
+                case 'work':
+                    remainingTime = settings.work_time;
+                    break;
+                case 'short-break':
+                    remainingTime = settings.short_break;
+                    break;
+                case 'long-break':
+                    remainingTime = settings.long_break;
+                    break;
+            }
+            
+            updateTimerDisplay();
+        }
+
+        // 切换模式
+        function switchMode() {
+            switch (currentMode) {
+                case 'work':
+                    setMode('short-break');
+                    break;
+                case 'short-break':
+                case 'long-break':
+                    setMode('work');
+                    break;
+            }
+        }
+
+        // 显示提醒
+        function showReminder() {
+            if (settings.reminder === 'none') return;
+            
+            if (settings.reminder === 'notification' || settings.reminder === 'both') {
+                if (Notification.permission === 'granted') {
+                    new Notification('番茄钟提醒', {
+                        body: `${currentMode === 'work' ? '工作时间结束！' : '休息时间结束！'}`,
+                        icon: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIj48cGF0aCBkPSJNNTAgMTBDMjMgMTAgMTAgMjMgMTAgNTBDMTAgNzcgMjMgOTAgNTAgOTBDNzcgOTAgOTAgNzcgOTAgNTBDOTAgMjMgNzcgMTAgNTAgMTBaTTUwIDE1QzY5LjMzMzMgMTUgODUgMzAuNjY2NyA4NSA1MEM4NSA2OS4zMzMzIDY5LjMzMzMgODUgNTAgODVDMzAuNjY2NyA4NSAxNSA2OS4zMzMzIDE1IDUwQzE1IDMwLjY2NjcgMzAuNjY2NyAxNSA1MCAxNVoiIGZpbGw9IiM2NjdlZWEiLz48cGF0aCBkPSJNNTAgMjBDMzIuMzg1OCAyMCAxNSAzNy4zODU4IDE1IDUwQzE1IDYyLjYxNDIgMzIuMzg1OCA4MCA1MCA4MEM2Ny42MTQyIDgwIDg1IDYyLjYxNDIgODUgNTBDODUgMzcuMzg1OCA2Ny42MTQyIDIwIDUwIDIwWiIgZmlsbD0iI0YwOTNmYiIvPjwvc3ZnPg=='
+                    });
+                }
+            }
+            
+            if (settings.reminder === 'sound' || settings.reminder === 'both') {
+                // 创建简单的提示音
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(400, audioContext.currentTime + 0.5);
+                
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.5);
+            }
+        }
+
+        // 请求通知权限
+        function requestNotificationPermission() {
+            if ('Notification' in window) {
+                Notification.requestPermission();
+            }
+        }
+
+        // 添加任务
+        function addTask() {
+            const taskName = taskInput.value.trim();
+            if (taskName) {
+                // 如果没有选择日期，使用当天的日期
+                const dateToUse = selectedDate || getCurrentDateString();
+                tasks.push({
+                    name: `${dateToUse} - ${taskName}`,
+                    completed: false,
+                    pomodoro_count: 0,
+                    date: dateToUse
+                });
+                taskInput.value = '';
+                renderTasks();
+                renderCalendar();
+                saveData();
+            }
+        }
+
+        // 获取当前日期字符串（YYYY-MM-DD格式）
+        function getCurrentDateString() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = (now.getMonth() + 1).toString().padStart(2, '0');
+            const day = now.getDate().toString().padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        // 切换任务完成状态
+        function toggleTask(index) {
+            const filteredTasks = selectedDate ? tasks.filter(task => task.date === selectedDate) : tasks;
+            const task = filteredTasks[index];
+            const originalIndex = tasks.findIndex(t => t === task);
+            if (originalIndex !== -1) {
+                tasks[originalIndex].completed = !tasks[originalIndex].completed;
+                renderTasks();
+                renderCalendar();
+                saveData();
+            }
+        }
+
+        // 编辑任务
+        function editTask(index) {
+            console.log('编辑任务，索引:', index);
+            const filteredTasks = selectedDate ? tasks.filter(task => task.date === selectedDate) : tasks;
+            console.log('过滤后的任务:', filteredTasks);
+            if (filteredTasks[index]) {
+                const task = filteredTasks[index];
+                console.log('当前任务:', task);
+                const originalIndex = tasks.findIndex(t => t.name === task.name && t.date === task.date);
+                console.log('原始索引:', originalIndex);
+                if (originalIndex !== -1) {
+                    const currentTaskName = task.name.replace(`${selectedDate} - `, '');
+                    console.log('当前任务名称:', currentTaskName);
+                    // 显示编辑任务模态框
+                    editTaskInput.value = currentTaskName;
+                    currentEditTaskIndex = originalIndex;
+                    editTaskModal.style.display = 'block';
+                } else {
+                    console.error('未找到原始任务');
+                }
+            } else {
+                console.error('任务索引不存在');
+            }
+        }
+
+        // 删除任务
+        function deleteTask(index) {
+            const filteredTasks = selectedDate ? tasks.filter(task => task.date === selectedDate) : tasks;
+            const task = filteredTasks[index];
+            const originalIndex = tasks.findIndex(t => t === task);
+            if (originalIndex !== -1) {
+                taskToDeleteIndex = originalIndex;
+                confirmDeleteModal.style.display = 'block';
+            }
+        }
+
+        // 确认删除任务
+        function confirmDeleteTask() {
+            if (taskToDeleteIndex !== -1) {
+                tasks.splice(taskToDeleteIndex, 1);
+                renderTasks();
+                renderCalendar();
+                saveData();
+                confirmDeleteModal.style.display = 'none';
+                taskToDeleteIndex = -1;
+            }
+        }
+
+        // 取消删除任务
+        function cancelDeleteTask() {
+            confirmDeleteModal.style.display = 'none';
+            taskToDeleteIndex = -1;
+        }
+
+        // 渲染任务列表
+        function renderTasks() {
+            taskList.innerHTML = '';
+            
+            // 更新任务部分标题
+            if (selectedDate) {
+                taskSectionTitle.textContent = `${selectedDate} 任务管理`;
+            } else {
+                taskSectionTitle.textContent = '任务管理';
+            }
+            
+            // 过滤当前选中日期的任务
+            const filteredTasks = selectedDate ? tasks.filter(task => task.date === selectedDate) : tasks;
+            
+            if (filteredTasks.length === 0) {
+                const emptyMessage = document.createElement('div');
+                emptyMessage.className = 'empty-tasks';
+                emptyMessage.textContent = selectedDate ? `该日期暂无任务` : '请选择一个日期查看任务';
+                emptyMessage.style.textAlign = 'center';
+                emptyMessage.style.padding = '20px';
+                emptyMessage.style.color = '#999';
+                taskList.appendChild(emptyMessage);
+            } else {
+                filteredTasks.forEach((task, index) => {
+                    const taskItem = document.createElement('div');
+                    taskItem.className = `task-item ${task.completed ? 'completed' : ''}`;
+                    taskItem.innerHTML = `
+                        <input type="checkbox" class="task-checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTask(${index})">
+                        <span class="task-name">${task.name.replace(`${selectedDate} - `, '')}</span>
+                        <div class="task-actions">
+                            <button class="edit-btn" onclick="editTask(${index})">编辑</button>
+                            <button class="delete-btn" onclick="deleteTask(${index})">删除</button>
+                        </div>
+                    `;
+                    taskList.appendChild(taskItem);
+                });
+            }
+        }
+
+        // 渲染日历
+        function renderCalendar() {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            
+            calendarTitle.textContent = `${year}年${month + 1}月`;
+            
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const startDate = new Date(firstDay);
+            startDate.setDate(startDate.getDate() - firstDay.getDay());
+            
+            calendarGrid.innerHTML = '';
+            
+            // 添加星期标题
+            const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
+            weekdays.forEach(day => {
+                const dayElement = document.createElement('div');
+                dayElement.className = 'calendar-day';
+                dayElement.style.fontWeight = 'bold';
+                dayElement.textContent = day;
+                calendarGrid.appendChild(dayElement);
+            });
+            
+            // 添加日期
+            for (let i = 0; i < 42; i++) {
+                const date = new Date(startDate);
+                date.setDate(startDate.getDate() + i);
+                
+                const dayElement = document.createElement('div');
+                dayElement.className = 'calendar-day';
+                
+                // 检查是否是今天
+                const today = new Date();
+                if (date.getDate() === today.getDate() && date.getMonth() === today.getMonth() && date.getFullYear() === today.getFullYear()) {
+                    dayElement.classList.add('today');
+                }
+                
+                // 检查是否是当前月份
+                if (date.getMonth() !== month) {
+                    dayElement.style.opacity = '0.5';
+                }
+                
+                // 检查是否有任务
+                const dateStr = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
+                const dayTasks = tasks.filter(task => task.date === dateStr);
+                const hasTask = dayTasks.length > 0;
+                if (hasTask) {
+                    dayElement.classList.add('has-task');
+                }
+                
+                // 检查是否是选中的日期
+                if (selectedDate === dateStr) {
+                    dayElement.classList.add('selected');
+                }
+                
+                // 创建日期内容
+                const dateContent = document.createElement('div');
+                dateContent.textContent = date.getDate();
+                
+                dayElement.appendChild(dateContent);
+                
+                // 添加任务列表（小字）
+                if (hasTask) {
+                    const taskListElement = document.createElement('div');
+                    taskListElement.className = 'task-list-mini';
+                    // 最多显示3个任务
+                    const displayTasks = dayTasks.slice(0, 3);
+                    displayTasks.forEach((task, index) => {
+                        const taskElement = document.createElement('div');
+                        taskElement.className = `task-mini ${task.completed ? 'completed' : ''}`;
+                        taskElement.innerHTML = `<span class="task-bullet"></span>${task.name.replace(`${dateStr} - `, '')}`;
+                        taskListElement.appendChild(taskElement);
+                    });
+                    // 如果任务超过3个，显示省略号
+                    if (dayTasks.length > 3) {
+                        const moreElement = document.createElement('div');
+                        moreElement.className = 'task-mini';
+                        moreElement.innerHTML = `<span class="task-bullet"></span>...还有 ${dayTasks.length - 3} 个任务`;
+                        taskListElement.appendChild(moreElement);
+                    }
+                    dayElement.appendChild(taskListElement);
+                }
+                
+                // 添加点击事件（单击选中日期）
+                dayElement.addEventListener('click', (function(dStr, dMonth) {
+                    return function() {
+                        console.log('点击了日期:', dStr);
+                        if (dMonth === month) {
+                            console.log('是当前月份，设置为选中日期');
+                            selectedDate = dStr;
+                            renderCalendar();
+                            renderTasks(); // 更新任务列表
+                        } else {
+                            console.log('不是当前月份，不处理');
+                        }
+                    };
+                })(dateStr, date.getMonth()));
+                
+                // 添加双击事件（双击添加任务）
+                dayElement.addEventListener('dblclick', (function(dStr, dMonth) {
+                    return function() {
+                        console.log('双击了日期:', dStr);
+                        if (dMonth === month) {
+                            console.log('是当前月份，显示添加任务模态框');
+                            selectedDate = dStr;
+                            renderCalendar();
+                            renderTasks();
+                            // 显示添加任务的模态框
+                            currentAddTaskDate = dStr;
+                            addTaskInput.value = '';
+                            addTaskModal.style.display = 'block';
+                        } else {
+                            console.log('不是当前月份，不处理');
+                        }
+                    };
+                })(dateStr, date.getMonth()));
+                
+                calendarGrid.appendChild(dayElement);
+            }
+        }
+        
+
+
+        // 更新设置表单
+        function updateSettingsForm() {
+            workTimeInput.value = Math.floor(settings.work_time / 60);
+            shortBreakInput.value = Math.floor(settings.short_break / 60);
+            longBreakInput.value = Math.floor(settings.long_break / 60);
+            reminderTypeSelect.value = settings.reminder;
+        }
+
+        // 保存设置
+        function saveSettings() {
+            settings.work_time = parseInt(workTimeInput.value) * 60;
+            settings.short_break = parseInt(shortBreakInput.value) * 60;
+            settings.long_break = parseInt(longBreakInput.value) * 60;
+            settings.reminder = reminderTypeSelect.value;
+            
+            // 如果当前是工作模式，更新剩余时间
+            if (currentMode === 'work') {
+                remainingTime = settings.work_time;
+                updateTimerDisplay();
+            }
+            
+            saveData();
+            settingsModal.style.display = 'none';
+            showNotification('设置已保存！');
+        }
+
+        // 显示通知
+        function showNotification(message) {
+            notificationMessage.textContent = message;
+            notificationModal.style.display = 'block';
+        }
+
+        // 事件监听器
+        startBtn.addEventListener('click', startTimer);
+        pauseBtn.addEventListener('click', pauseTimer);
+        resetBtn.addEventListener('click', resetTimer);
+        
+        modeBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                setMode(btn.dataset.mode);
+            });
+        });
+        
+        addTaskBtn.addEventListener('click', addTask);
+        taskInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                addTask();
+            }
+        });
+        
+        prevMonthBtn.addEventListener('click', () => {
+            currentDate.setMonth(currentDate.getMonth() - 1);
+            renderCalendar();
+        });
+        
+        nextMonthBtn.addEventListener('click', () => {
+            currentDate.setMonth(currentDate.getMonth() + 1);
+            renderCalendar();
+        });
+        
+        saveSettingsBtn.addEventListener('click', saveSettings);
+        
+        // 设置按钮点击事件
+        settingsBtn.addEventListener('click', () => {
+            settingsModal.style.display = 'block';
+        });
+        
+        // 关闭按钮点击事件
+        closeSettingsBtn.addEventListener('click', () => {
+            settingsModal.style.display = 'none';
+        });
+        
+        // 点击模态框外部关闭
+        window.addEventListener('click', (e) => {
+            if (e.target === settingsModal) {
+                settingsModal.style.display = 'none';
+            }
+            if (e.target === editTaskModal) {
+                editTaskModal.style.display = 'none';
+            }
+            if (e.target === addTaskModal) {
+                addTaskModal.style.display = 'none';
+            }
+            if (e.target === notificationModal) {
+                notificationModal.style.display = 'none';
+            }
+            if (e.target === confirmDeleteModal) {
+                cancelDeleteTask();
+            }
+        });
+        
+        // 编辑任务模态框关闭按钮点击事件
+        closeEditTaskBtn.addEventListener('click', () => {
+            editTaskModal.style.display = 'none';
+        });
+        
+        // 保存编辑任务按钮点击事件
+        saveEditTaskBtn.addEventListener('click', () => {
+            const newName = editTaskInput.value.trim();
+            if (newName && currentEditTaskIndex !== -1) {
+                const task = tasks[currentEditTaskIndex];
+                const dateStr = task.date;
+                tasks[currentEditTaskIndex].name = `${dateStr} - ${newName}`;
+                console.log('更新后的任务:', tasks[currentEditTaskIndex]);
+                renderTasks();
+                renderCalendar();
+                saveData();
+                editTaskModal.style.display = 'none';
+            }
+        });
+        
+        // 添加任务模态框关闭按钮点击事件
+        closeAddTaskBtn.addEventListener('click', () => {
+            addTaskModal.style.display = 'none';
+        });
+        
+        // 保存添加任务按钮点击事件
+        saveAddTaskBtn.addEventListener('click', () => {
+            const taskName = addTaskInput.value.trim();
+            if (taskName && currentAddTaskDate) {
+                tasks.push({
+                    name: `${currentAddTaskDate} - ${taskName}`,
+                    completed: false,
+                    pomodoro_count: 0,
+                    date: currentAddTaskDate
+                });
+                renderTasks();
+                saveData();
+                renderCalendar(); // 重新渲染日历以显示新任务
+                addTaskModal.style.display = 'none';
+            }
+        });
+        
+        // 通知模态框关闭按钮点击事件
+        closeNotificationBtn.addEventListener('click', () => {
+            notificationModal.style.display = 'none';
+        });
+        
+        // 通知模态框确定按钮点击事件
+        closeNotificationBtn2.addEventListener('click', () => {
+            notificationModal.style.display = 'none';
+        });
+        
+        // 确认删除模态框关闭按钮点击事件
+        closeConfirmDeleteBtn.addEventListener('click', cancelDeleteTask);
+        
+        // 取消删除按钮点击事件
+        cancelDeleteBtn.addEventListener('click', cancelDeleteTask);
+        
+        // 确认删除按钮点击事件
+        confirmDeleteBtn.addEventListener('click', confirmDeleteTask);
+
+        // 折叠功能
+        function initCollapse() {
+            const collapseBtns = document.querySelectorAll('.collapse-btn');
+            const allContents = document.querySelectorAll('.section-content');
+            
+            collapseBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    // 检查当前状态（以第一个内容区域为准）
+                    const isCollapsed = allContents[0].classList.contains('collapsed');
+                    
+                    if (isCollapsed) {
+                        // 展开所有
+                        allContents.forEach(content => {
+                            content.classList.remove('collapsed');
+                        });
+                        collapseBtns.forEach(btn => {
+                            btn.textContent = '▼';
+                        });
+                    } else {
+                        // 折叠所有
+                        allContents.forEach(content => {
+                            content.classList.add('collapsed');
+                        });
+                        collapseBtns.forEach(btn => {
+                            btn.textContent = '▶';
+                        });
+                    }
+                });
+            });
+        }
+
+        // 初始化应用
+        init();
+        initCollapse();
+    </script>
+</body>
+</html>
