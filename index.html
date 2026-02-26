@@ -161,7 +161,7 @@
             }
         }
 
-        .timer-section, .tasks-section, .calendar-section, .settings-section {
+        .timer-section, .tasks-section, .shortcuts-section, .calendar-section, .settings-section {
             background: white;
             border-radius: 15px;
             padding: 15px;
@@ -175,6 +175,10 @@
         }
 
         .tasks-section {
+            flex: 1;
+        }
+
+        .shortcuts-section {
             flex: 1;
         }
 
@@ -278,7 +282,17 @@
             color: white;
         }
 
-        .task-list {
+        .shortcut-form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .shortcut-form input {
+            flex: 1;
+        }
+
+        .task-list, .shortcut-list {
             max-height: 160px;
             overflow-y: auto;
         }
@@ -299,6 +313,58 @@
         
         .task-list::-webkit-scrollbar-thumb:hover {
             background: #555;
+        }
+
+        .shortcut-list::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .shortcut-list::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        
+        .shortcut-list::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+        
+        .shortcut-list::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        .shortcut-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background 0.2s ease;
+        }
+
+        .shortcut-item:hover {
+            background: #f9f9f9;
+        }
+
+        .shortcut-name {
+            flex: 1;
+            user-select: none;
+        }
+
+        .launch-btn {
+            background: #4CAF50;
+            color: white;
+            padding: 5px 10px;
+            font-size: 0.8rem;
+            border-radius: 20px;
+            margin-right: 5px;
+        }
+
+        .delete-shortcut-btn {
+            background: #ff6b6b;
+            color: white;
+            padding: 5px 10px;
+            font-size: 0.8rem;
+            border-radius: 20px;
         }
 
         .task-item {
@@ -715,6 +781,23 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- 快捷启动部分 -->
+                <div class="collapsible-section shortcuts-section">
+                    <div class="section-header">
+                        <h2>快捷启动</h2>
+                    </div>
+                    <div class="section-content" id="shortcuts-content">
+                        <div class="shortcut-form">
+                            <input type="text" id="shortcut-name" placeholder="应用名称...">
+                            <input type="text" id="shortcut-path" placeholder="应用路径...">
+                            <button class="add-task-btn" id="add-shortcut-btn">添加</button>
+                        </div>
+                        <div class="shortcut-list" id="shortcut-list">
+                            <!-- 快捷启动列表将通过 JavaScript 动态生成 -->
+                        </div>
+                    </div>
+                </div>
                 <div class="resizer" data-resize="horizontal"></div>
             </div>
 
@@ -854,6 +937,7 @@
         let currentMode = 'work';
         let isRunning = false;
         let tasks = [];
+        let shortcuts = [];
         let settings = {
             work_time: 1500,
             short_break: 300,
@@ -904,12 +988,19 @@
         const cancelDeleteBtn = document.getElementById('cancel-delete-btn');
         const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
         let taskToDeleteIndex = -1;
+        
+        // 快捷启动相关元素
+        const shortcutNameInput = document.getElementById('shortcut-name');
+        const shortcutPathInput = document.getElementById('shortcut-path');
+        const addShortcutBtn = document.getElementById('add-shortcut-btn');
+        const shortcutList = document.getElementById('shortcut-list');
 
         // 初始化
         function init() {
             loadData();
             updateTimerDisplay();
             renderTasks();
+            renderShortcuts();
             renderCalendar();
             updateSettingsForm();
             requestNotificationPermission();
@@ -1001,6 +1092,7 @@
                 const data = JSON.parse(localStorage.getItem('pomodoro_data'));
                 if (data) {
                     tasks = data.tasks || [];
+                    shortcuts = data.shortcuts || [];
                     settings = {
                         work_time: data.work_time || 1500,
                         short_break: data.short_break || 300,
@@ -1018,6 +1110,7 @@
         function saveData() {
             const data = {
                 tasks,
+                shortcuts,
                 work_time: settings.work_time,
                 short_break: settings.short_break,
                 long_break: settings.long_break,
@@ -1246,6 +1339,73 @@
             taskToDeleteIndex = -1;
         }
 
+        // 添加快捷启动项
+        function addShortcut() {
+            const name = shortcutNameInput.value.trim();
+            const path = shortcutPathInput.value.trim();
+            if (name && path) {
+                shortcuts.push({
+                    name: name,
+                    path: path
+                });
+                shortcutNameInput.value = '';
+                shortcutPathInput.value = '';
+                renderShortcuts();
+                saveData();
+            }
+        }
+
+        // 启动应用
+        function launchApp(index) {
+            const shortcut = shortcuts[index];
+            if (shortcut) {
+                try {
+                    // 在浏览器环境中，我们无法直接启动本地应用
+                    // 这里只是模拟启动操作
+                    console.log('启动应用:', shortcut.name, shortcut.path);
+                    alert(`正在启动: ${shortcut.name}\n路径: ${shortcut.path}`);
+                } catch (error) {
+                    console.error('启动应用失败:', error);
+                    alert('启动应用失败，请检查路径是否正确');
+                }
+            }
+        }
+
+        // 删除快捷启动项
+        function deleteShortcut(index) {
+            shortcuts.splice(index, 1);
+            renderShortcuts();
+            saveData();
+        }
+
+        // 渲染快捷启动列表
+        function renderShortcuts() {
+            shortcutList.innerHTML = '';
+            
+            if (shortcuts.length === 0) {
+                const emptyMessage = document.createElement('div');
+                emptyMessage.className = 'empty-tasks';
+                emptyMessage.textContent = '添加快捷启动项';
+                emptyMessage.style.textAlign = 'center';
+                emptyMessage.style.padding = '20px';
+                emptyMessage.style.color = '#999';
+                shortcutList.appendChild(emptyMessage);
+            } else {
+                shortcuts.forEach((shortcut, index) => {
+                    const shortcutItem = document.createElement('div');
+                    shortcutItem.className = 'shortcut-item';
+                    shortcutItem.innerHTML = `
+                        <span class="shortcut-name">${shortcut.name}</span>
+                        <div class="shortcut-actions">
+                            <button class="launch-btn" onclick="launchApp(${index})">启动</button>
+                            <button class="delete-shortcut-btn" onclick="deleteShortcut(${index})">删除</button>
+                        </div>
+                    `;
+                    shortcutList.appendChild(shortcutItem);
+                });
+            }
+        }
+
         // 渲染任务列表
         function renderTasks() {
             taskList.innerHTML = '';
@@ -1470,6 +1630,18 @@
         taskInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 addTask();
+            }
+        });
+        
+        addShortcutBtn.addEventListener('click', addShortcut);
+        shortcutNameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                addShortcut();
+            }
+        });
+        shortcutPathInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                addShortcut();
             }
         });
         
